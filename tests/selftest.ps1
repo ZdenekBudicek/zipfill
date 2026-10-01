@@ -146,7 +146,15 @@ try {
     Check 'zip jen se slozkami: nic nevytvoreno' (@(Get-ChildItem -LiteralPath $empty2 -Force).Count -eq 0)
 }
 finally {
-    if (Test-Path $base) { cmd /c rd /s /q "\\?\$base" }
+    $resolvedBase = [IO.Path]::GetFullPath($base)
+    $tempRoot = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
+    if (-not $resolvedBase.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -or
+        -not ([IO.Path]::GetFileName($resolvedBase).StartsWith('zipfill-selftest-'))) {
+        throw 'Refusing cleanup outside the self-test temporary directory.'
+    }
+    if (Test-Path -LiteralPath $resolvedBase) {
+        Remove-Item -LiteralPath $resolvedBase -Recurse -Force
+    }
 }
 
 Write-Host ''
